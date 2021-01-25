@@ -1,0 +1,80 @@
+version: '3.6'  
+services:
+  rabbitmq:
+   image: rabbitmq:3-management
+   ports:
+      # The standard AMQP protocol port
+      - '5672:5672'
+      # HTTP management UI
+      - '15672:15672'
+   networks:
+      - network
+   container_name: rabbitmq
+   restart: 'always'
+
+  nestor_wikipedia_search:
+   build:
+      context: ./nestor_wikipedia_search
+   container_name: nestor_wikipedia_search
+   networks:
+      - network
+   environment:
+      - RABBITMQ_HOST=rabbitmq
+   depends_on:
+      - rabbitmq
+
+  nestor_translate_es_en:
+   build:
+      context: ./nestor_translate_es_en
+   container_name: nestor__translate_es_en
+   networks:
+      - network
+   environment:
+      - RABBITMQ_HOST=rabbitmq
+   depends_on:
+      - rabbitmq
+  
+  nestor_slack_reader:
+   build:
+     context: ./nestor_slack_reader
+   container_name: nestor_slack_reader
+   environment:
+      - RABBITMQ_HOST=rabbitmq
+   depends_on:
+      - rabbitmq
+   ports:
+      - 4390:3000   
+   networks:
+      - network
+   volumes: 
+      - ./nestor_slack_reader:/nestor_slack_reader
+
+  nestor_slack_writer:
+   build:
+     context: ./nestor_slack_writer
+   container_name: nestor_slack_writer
+   environment:
+      - RABBITMQ_HOST=rabbitmq
+   depends_on:
+      - rabbitmq   
+   networks:
+      - network
+   
+  nestor_youtube_search:
+   build:
+      context: ./nestor_youtube_search
+   container_name: nestor_youtube_search
+   networks:
+      - network
+   environment:
+      - RABBITMQ_HOST=rabbitmq
+   depends_on:
+      - rabbitmq
+   environment: 
+      - GOOGLE_API_KEY=AIzaSyDdao59CMCSBRM6sYTxvUXNYVEwFV8-5DA 
+      - RABBITMQ_HOST=rabbitmq
+
+   
+
+networks:
+  network: {}
